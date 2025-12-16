@@ -104,8 +104,8 @@ try:
             <h1 style="font-size:4rem; margin:0">{prob_actual}%</h1>
             <p style="font-size:1.2rem">Estado: <b>{"ALERTA CRÍTICA" if prob_actual > 44 else "ESTABLE"}</b></p>
         </div>
-    """, unsafe_area_allowed=True)
-
+    """, unsafe_allow_html=True) # <--- Asegúrate que diga esto
+    
     # --- GRÁFICO 2022 - PRESENTE ---
     st.subheader("📉 Evolución de Probabilidad (2022 - Actualidad)")
     df_plot = df_results[df_results.index >= "2022-01-01"]
@@ -130,3 +130,4 @@ try:
 
 except Exception as e:
     st.error(f"Error en el motor de cálculo: {e}")
+
