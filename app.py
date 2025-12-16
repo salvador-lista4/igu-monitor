@@ -16,12 +16,20 @@ st.set_page_config(page_title="IGU v5.2 Live Monitor", layout="wide")
 # Forzar descarga de datos diaria
 @st.cache_data(ttl=86400)
 def get_data_and_predict():
-    # 1) Descarga S&P500
-    sp = yf.download("^GSPC", start="1960-01-01", progress=False)
-    sp.columns = [c[0] if isinstance(c, tuple) else c for c in sp.columns]
-    sp = sp[['Adj Close']].rename(columns={'Adj Close': 'price'})
+    # 1) Descarga S&P500 de forma segura
+    sp_data = yf.download("^GSPC", start="1960-01-01", progress=False)
+    
+    # Esta línea arregla el error: elimina niveles extras si existen
+    if isinstance(sp_data.columns, pd.MultiIndex):
+        sp_data.columns = sp_data.columns.get_level_values(0)
+    
+    # Seleccionamos 'Close' o 'Adj Close' según disponibilidad
+    col_name = 'Adj Close' if 'Adj Close' in sp_data.columns else 'Close'
+    sp = sp_data[[col_name]].rename(columns={col_name: 'price'})
+    
     sp["ret"] = np.log(sp["price"]).diff()
     sp["rv30"] = sp["ret"].rolling(30).std() * np.sqrt(252)
+    # ... (el resto del código sigue igual)
     
     # 2) Macro de FRED
     fred_codes = {"DGS10": "US10Y", "DGS2": "US2Y", "TEDRATE": "TED"}
@@ -113,3 +121,4 @@ El sistema presenta una probabilidad del **{prob_actual}%**.
 * **Dinámica:** Con un dV de **{ultimo['dV']:.4f}**, la velocidad de cambio es {'creciente' if ultimo['dV'] > 0 else 'decreciente'}.
 * **Conclusión:** {'Se recomienda precaución extrema ya que el indicador supera el umbral crítico del 44%.' if prob_actual > 44 else 'Los parámetros se mantienen dentro de los rangos de control histórico.'}
 """)
+
